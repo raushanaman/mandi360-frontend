@@ -8,17 +8,26 @@ import {
   HiOutlineChevronDown,
   HiOutlineMenu,
   HiOutlineX,
+  HiOutlineLogout,
+  HiOutlineLockClosed,
 } from 'react-icons/hi';
 import { CATEGORIES } from '../../data/shopsData';
+import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 
 const Header = () => {
   const [productsOpen, setProductsOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef(null);
+  const userMenuRef = useRef(null);
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { items } = useCart();
+  const { user, logout } = useAuth();
+  const cartCount = items.reduce((sum, i) => sum + i.qty, 0);
 
   const navLink = (to) =>
     `px-4 py-2 text-sm font-semibold transition-all relative ${
@@ -30,9 +39,10 @@ const Header = () => {
   // Close dropdown on outside click
   useEffect(() => {
     const handler = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target))
         setProductsOpen(false);
-      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target))
+        setUserMenuOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -40,7 +50,10 @@ const Header = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) navigate(`/shops?q=${encodeURIComponent(searchQuery.trim())}`);
+    const q = searchQuery.trim();
+    if (!q) return;
+    navigate(`/search?q=${encodeURIComponent(q)}`);
+    setSearchQuery('');
   };
 
   return (
@@ -49,28 +62,21 @@ const Header = () => {
 
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 text-xl font-black tracking-tight text-slate-900 flex-shrink-0">
-          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-            {/* Ears */}
-            <circle cx="8" cy="8" r="6" fill="#1e293b"/>
-            <circle cx="28" cy="8" r="6" fill="#1e293b"/>
-            <circle cx="8" cy="8" r="3" fill="#475569"/>
-            <circle cx="28" cy="8" r="3" fill="#475569"/>
-            {/* Face */}
-            <circle cx="18" cy="20" r="14" fill="white" stroke="#e2e8f0" strokeWidth="1"/>
-            {/* Eye patches */}
-            <ellipse cx="12" cy="17" rx="4" ry="4.5" fill="#1e293b"/>
-            <ellipse cx="24" cy="17" rx="4" ry="4.5" fill="#1e293b"/>
-            {/* Eyes */}
-            <circle cx="12" cy="17" r="2" fill="white"/>
-            <circle cx="24" cy="17" r="2" fill="white"/>
-            <circle cx="12.5" cy="17" r="1" fill="#1e293b"/>
-            <circle cx="24.5" cy="17" r="1" fill="#1e293b"/>
-            {/* Nose */}
-            <ellipse cx="18" cy="23" rx="2.5" ry="1.5" fill="#1e293b"/>
-            {/* Mouth */}
-            <path d="M15 25.5 Q18 28 21 25.5" stroke="#1e293b" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+          <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* Background circle */}
+            <circle cx="19" cy="19" r="19" fill="#1e293b"/>
+            {/* Shopping bag body */}
+            <rect x="11" y="16" width="16" height="13" rx="2.5" fill="white"/>
+            {/* Bag handle */}
+            <path d="M15 16 C15 12 23 12 23 16" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
+            {/* Location pin on bag */}
+            <circle cx="23" cy="13" r="5" fill="#ef4444"/>
+            <path d="M23 10.5 C21.6 10.5 20.5 11.6 20.5 13 C20.5 14.8 23 17 23 17 C23 17 25.5 14.8 25.5 13 C25.5 11.6 24.4 10.5 23 10.5Z" fill="white"/>
+            <circle cx="23" cy="13" r="1.2" fill="#ef4444"/>
+            {/* Shine on bag */}
+            <rect x="13" y="19" width="4" height="1.5" rx="0.75" fill="#e2e8f0" opacity="0.5"/>
           </svg>
-          <span className="hidden sm:block">PANDA</span>
+          <span className="hidden sm:block">MANDI-360</span>
         </Link>
 
         {/* Desktop Nav */}
@@ -141,7 +147,7 @@ const Header = () => {
           </div>
 
           <Link to="/shops" className={navLink('/shops')}>Local Shops</Link>
-          <Link to="/register-shop" className={navLink('/register-shop')}>Sell on Panda</Link>
+          <Link to="/register-shop" className={navLink('/register-shop')}>Sell on Mandi-360</Link>
         </nav>
 
         {/* Search Bar */}
@@ -168,22 +174,112 @@ const Header = () => {
               className="relative p-2.5 text-slate-700 hover:bg-slate-50 rounded-xl transition cursor-pointer"
             >
               <HiOutlineShoppingBag size={24} />
-              <span className="absolute top-1 right-1 bg-red-500 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full">
-                2
-              </span>
+              {cartCount > 0 && (
+                <span className="absolute top-1 right-1 bg-red-500 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full">
+                  {cartCount}
+                </span>
+              )}
             </motion.div>
           </Link>
 
-          {/* Login */}
-          <Link
-            to="/login"
-            className="hidden sm:flex items-center gap-2 pl-2 pr-4 py-2 border border-slate-200 rounded-xl hover:border-slate-300 hover:shadow-sm transition-all"
-          >
-            <div className="bg-slate-100 p-1.5 rounded-lg text-slate-500">
-              <HiOutlineUserCircle size={20} />
+          {/* Login / User */}
+          {user ? (
+            <div className="hidden sm:block relative" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen(o => !o)}
+                className="flex items-center gap-2 pl-2 pr-3 py-2 border border-slate-200 rounded-xl hover:border-slate-300 transition-all"
+              >
+                <div className="w-7 h-7 bg-slate-900 rounded-lg flex items-center justify-center text-white text-xs font-black">
+                  {user.firstName?.[0]?.toUpperCase()}
+                </div>
+                <span className="text-sm font-bold text-slate-700">{user.firstName}</span>
+                <HiOutlineChevronDown size={14} className={`text-slate-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {userMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50"
+                  >
+                    <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
+                      <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Account</p>
+                      <p className="text-sm font-bold text-slate-900 mt-0.5">{user.firstName}</p>
+                    </div>
+                    <div className="p-2">
+                      <Link
+                        to="/change-password"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all"
+                      >
+                        <HiOutlineLockClosed size={16} /> Change Password
+                      </Link>
+                      {user.role === 'merchant' && (
+                        <Link
+                          to="/dashboard"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all"
+                        >
+                          🏪 My Shop Dashboard
+                        </Link>
+                      )}
+                      {user.role === 'merchant' && (
+                        <Link
+                          to="/merchant/orders"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all"
+                        >
+                          📋 Shop Orders
+                        </Link>
+                      )}
+                      <Link
+                        to="/orders"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all"
+                      >
+                        📦 My Orders
+                      </Link>
+                      <Link
+                        to="/wishlist"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all"
+                      >
+                        ❤️ Wishlist
+                      </Link>
+                      {user.role === 'admin' && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all"
+                        >
+                          ⚙️ Admin Panel
+                        </Link>
+                      )}
+                      <button
+                        onClick={() => { logout(); navigate('/'); setUserMenuOpen(false); }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 transition-all"
+                      >
+                        <HiOutlineLogout size={16} /> Logout
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-            <span className="text-sm font-bold text-slate-700">Login</span>
-          </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="hidden sm:flex items-center gap-2 pl-2 pr-4 py-2 border border-slate-200 rounded-xl hover:border-slate-300 hover:shadow-sm transition-all"
+            >
+              <div className="bg-slate-100 p-1.5 rounded-lg text-slate-500">
+                <HiOutlineUserCircle size={20} />
+              </div>
+              <span className="text-sm font-bold text-slate-700">Login</span>
+            </Link>
+          )}
 
           {/* Mobile Hamburger */}
           <button
@@ -254,7 +350,7 @@ const Header = () => {
               </div>
 
               <Link to="/shops" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50">Local Shops</Link>
-              <Link to="/register-shop" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50">Sell on Panda</Link>
+              <Link to="/register-shop" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50">Sell on Mandi-360</Link>
               <Link to="/login" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50">Login</Link>
               <Link to="/register" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 rounded-xl text-sm font-bold text-white bg-slate-900 text-center mt-2">Create Account</Link>
             </div>

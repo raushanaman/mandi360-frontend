@@ -1,17 +1,13 @@
-// src/pages/Cart.jsx
+import { useCart } from '../context/CartContext';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
-  HiOutlineTrash, HiOutlineTruck, HiOutlineArrowRight,
+  HiOutlineTrash, HiOutlineTruck,
   HiOutlineShieldCheck, HiOutlineRefresh, HiOutlineTag,
 } from 'react-icons/hi';
 import { HiOutlineBuildingStorefront } from 'react-icons/hi2';
-
-const INITIAL_ITEMS = [
-  { id: 1, name: 'Panda Pro Sneakers',    price: 2999, type: 'global', qty: 1, brand: 'Official Store', emoji: '👟' },
-  { id: 2, name: 'Fresh Alphonso Mangoes', price: 600, type: 'local',  qty: 2, shop: 'Fresh Basket',    emoji: '🥭' },
-];
+import PaymentButton from '../components/PaymentButton';
 
 const TRUST_BADGES = [
   { icon: <HiOutlineShieldCheck size={18} />, label: 'Secure Checkout'  },
@@ -20,13 +16,9 @@ const TRUST_BADGES = [
 ];
 
 const Cart = () => {
-  const [items, setItems] = useState(INITIAL_ITEMS);
+  const { items, removeItem, updateQty } = useCart();
   const [coupon, setCoupon] = useState('');
-
-  const removeItem  = (id) => setItems(prev => prev.filter(i => i.id !== id));
-  const updateQty   = (id, delta) => setItems(prev =>
-    prev.map(i => i.id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i)
-  );
+  const firstName = localStorage.getItem('firstName') || 'User';
 
   const subtotal    = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   const delivery    = 0;
@@ -44,7 +36,7 @@ const Cart = () => {
         <div className="max-w-6xl mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">Your Bag</h1>
+              <h1 className="text-3xl font-black text-slate-900 tracking-tight">{firstName}'s Bag</h1>
               <p className="text-slate-500 text-sm mt-1">{totalItems} item{totalItems !== 1 ? 's' : ''} in your cart</p>
             </div>
             <Link to="/shops" className="text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors">
@@ -205,13 +197,7 @@ const Cart = () => {
                   </div>
 
                   {/* Checkout Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full bg-red-500 py-4 rounded-xl font-black flex items-center justify-center gap-2 hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30 text-sm"
-                  >
-                    Proceed to Checkout <HiOutlineArrowRight size={16} />
-                  </motion.button>
+                  <PaymentButton amount={total} />
 
                   <p className="text-center text-xs text-slate-500">
                     🔒 Secured by 256-bit SSL encryption
@@ -226,7 +212,12 @@ const Cart = () => {
   );
 };
 
-const CartRow = ({ item, onRemove, onQty }) => (
+const CartRow = ({ item, onRemove, onQty }) => {
+  const stockLeft = item.stock ?? Infinity;
+  const isLowStock = stockLeft !== Infinity && stockLeft <= 5 && stockLeft > 0;
+  const isOutOfStock = stockLeft === 0;
+
+  return (
   <motion.div
     layout
     initial={{ opacity: 0, x: -10 }}
@@ -235,15 +226,34 @@ const CartRow = ({ item, onRemove, onQty }) => (
     className="flex items-center gap-5 p-5 border-b border-slate-100 last:border-0"
   >
     {/* Product visual */}
-    <div className="w-20 h-20 bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl flex items-center justify-center text-4xl flex-shrink-0 border border-slate-100">
-      {item.emoji}
+    <div className="w-20 h-20 bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl flex items-center justify-center text-4xl flex-shrink-0 border border-slate-100 overflow-hidden relative">
+      {item.image
+        ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+        : <span>{item.emoji}</span>
+      }
+      {isOutOfStock && (
+        <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+          <span className="text-[10px] font-black text-red-600">OUT</span>
+        </div>
+      )}
     </div>
 
     <div className="flex-1 min-w-0">
       <h3 className="font-bold text-slate-900 text-sm leading-tight mb-0.5">{item.name}</h3>
-      <p className="text-xs text-slate-400 font-semibold mb-3">
+      <p className="text-xs text-slate-400 font-semibold mb-2">
         {item.type === 'local' ? `🏪 ${item.shop}` : `🌐 ${item.brand}`}
       </p>
+
+      {/* Stock badges */}
+      {isOutOfStock ? (
+        <span className="inline-block text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-100 text-red-600 mb-2">
+          Out of Stock
+        </span>
+      ) : isLowStock ? (
+        <span className="inline-block text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 mb-2">
+          Only {stockLeft} left!
+        </span>
+      ) : null}
 
       <div className="flex items-center gap-3">
         {/* Qty controls */}
@@ -257,7 +267,8 @@ const CartRow = ({ item, onRemove, onQty }) => (
           <span className="w-8 text-center text-sm font-black text-slate-900">{item.qty}</span>
           <button
             onClick={() => onQty(item.id, +1)}
-            className="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-200 hover:text-emerald-500 transition-colors font-bold text-lg"
+            disabled={isOutOfStock}
+            className="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-200 hover:text-emerald-500 transition-colors font-bold text-lg disabled:opacity-40 disabled:cursor-not-allowed"
           >
             +
           </button>
@@ -279,6 +290,7 @@ const CartRow = ({ item, onRemove, onQty }) => (
       )}
     </div>
   </motion.div>
-);
+  );
+};
 
 export default Cart;

@@ -59,7 +59,7 @@ const Hero = () => {
             </h1>
 
             <p className="text-base text-slate-500 max-w-md mb-8 leading-relaxed">
-              Shop world-class brands or support the shop next door. Panda brings the entire marketplace to your doorstep.
+              Shop world-class brands or support the shop next door. Mandi-360 brings the entire marketplace to your doorstep.
             </p>
 
             {/* CTA Buttons */}

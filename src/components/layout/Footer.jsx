@@ -25,7 +25,7 @@ const Footer = () => {
         >
           <div className="text-center md:text-left">
             <h2 className="text-3xl font-black tracking-tighter mb-2">Are you a local shop owner?</h2>
-            <p className="text-red-100 font-medium">Take your business online with Panda in less than 2 minutes.</p>
+            <p className="text-red-100 font-medium">Take your business online with Mandi-360 in less than 2 minutes.</p>
           </div>
           <Link to="/register-shop">
             <motion.button 
@@ -44,7 +44,7 @@ const Footer = () => {
           {/* Brand Info */}
           <div className="space-y-6">
             <h3 className="text-2xl font-black tracking-tighter flex items-center gap-2">
-              <span className="text-3xl">🐼</span> PANDA
+              <span className="text-3xl">🛒</span> MANDI-360
             </h3>
             <p className="text-slate-400 text-sm leading-relaxed">
               The ultimate bridge between global fashion brands and your favorite neighborhood stores. Quality, speed, and community.
@@ -61,10 +61,10 @@ const Footer = () => {
           <div>
             <h4 className="font-bold mb-6 text-red-500 uppercase tracking-widest text-xs">Shop</h4>
             <ul className="space-y-4 text-slate-400 text-sm">
-              <li><Link to="/" className="hover:text-white transition">Global Collection</Link></li>
-              <li><Link to="/local-shops" className="hover:text-white transition">Local Marketplace</Link></li>
+              <li><Link to="/shops" className="hover:text-white transition">Local Marketplace</Link></li>
               <li><Link to="/new-arrivals" className="hover:text-white transition">New Arrivals</Link></li>
               <li><Link to="/deals" className="hover:text-white transition">Local Deals</Link></li>
+              <li><Link to="/products/groceries" className="hover:text-white transition">Groceries</Link></li>
             </ul>
           </div>
 
@@ -72,7 +72,7 @@ const Footer = () => {
           <div>
             <h4 className="font-bold mb-6 text-red-500 uppercase tracking-widest text-xs">Support</h4>
             <ul className="space-y-4 text-slate-400 text-sm">
-              <li><Link to="/track-order" className="hover:text-white transition">Track Order</Link></li>
+              <li><Link to="/orders" className="hover:text-white transition">Track Order</Link></li>
               <li><Link to="/shipping" className="hover:text-white transition">Shipping Policy</Link></li>
               <li><Link to="/help" className="hover:text-white transition">Help Center</Link></li>
               <li><Link to="/contact" className="hover:text-white transition">Contact Us</Link></li>
@@ -85,7 +85,7 @@ const Footer = () => {
             <ul className="space-y-4 text-slate-400 text-sm">
               <li className="flex items-center gap-3">
                 <HiOutlineMail className="text-red-500" size={20} />
-                <span>support@panda.com</span>
+                <span>support@mandi360.com</span>
               </li>
               <li className="flex items-center gap-3">
                 <HiOutlinePhone className="text-red-500" size={20} />
@@ -102,12 +102,12 @@ const Footer = () => {
         {/* Bottom Section: Copyright */}
         <div className="border-t border-slate-800 pt-10 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-slate-500 text-xs font-medium">
-            © {currentYear} Panda. All rights reserved. Built for Global & Local Commerce.
+            © {currentYear} Mandi-360. All rights reserved. Built for Global & Local Commerce.
           </p>
           <div className="flex gap-8 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-            <a href="#" className="hover:text-white transition">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition">Terms of Service</a>
-            <a href="#" className="hover:text-white transition">Cookies</a>
+            <Link to="/privacy" className="hover:text-white transition">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-white transition">Terms of Service</Link>
+            <Link to="/cookies" className="hover:text-white transition">Cookies</Link>
           </div>
         </div>
       </div>

@@ -1,10 +1,13 @@
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import Hero from '../components/home/Hero';
 import FeaturedProducts from '../components/home/FeaturedProducts';
-import { SHOPS, CATEGORIES } from '../data/shopsData';
+import { CATEGORIES } from '../data/shopsData';
 import { HiOutlineStar, HiOutlineLocationMarker, HiOutlineLightningBolt, HiOutlineShieldCheck, HiOutlineHeart } from 'react-icons/hi';
 import { HiOutlineTruck } from 'react-icons/hi';
+import API from '../utils/api';
+import axios from 'axios';
 
 const FEATURES = [
   {
@@ -17,7 +20,7 @@ const FEATURES = [
     icon: <HiOutlineShieldCheck size={24} />,
     color: 'bg-emerald-50 text-emerald-600',
     title: 'Verified Shops',
-    desc: 'Every shop on Panda is verified and trusted by the local community.',
+    desc: 'Every shop on Mandi-360 is verified and trusted by the local community.',
   },
   {
     icon: <HiOutlineHeart size={24} />,
@@ -42,6 +45,13 @@ const fadeUp = (delay = 0) => ({
 
 const Home = () => {
   const navigate = useNavigate();
+  const [shops, setShops] = useState([]);
+
+  useEffect(() => {
+    axios.get(`${API}/shops`)
+      .then(r => setShops(r.data.slice(0, 4)))
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="bg-slate-50 min-h-screen">
@@ -94,26 +104,24 @@ const Home = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {SHOPS.slice(0, 4).map((shop, i) => (
+          {shops.map((shop, i) => (
             <motion.div
-              key={shop.id}
+              key={shop._id}
               {...fadeUp(i * 0.1)}
               whileHover={{ y: -8 }}
               transition={{ type: 'spring', stiffness: 300 }}
               className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-xl transition-shadow duration-300 flex flex-col"
             >
-              <div className="relative h-44 overflow-hidden">
-                <img
-                  src={shop.image}
-                  alt={shop.name}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                />
+              <div className="relative h-44 overflow-hidden bg-slate-100">
+                {shop.image
+                  ? <img src={shop.image} alt={shop.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                  : <div className="w-full h-full flex items-center justify-center text-5xl">{CATEGORIES.find(c => c.id === shop.category)?.emoji || '🏪'}</div>
+                }
                 <span className={`absolute top-3 left-3 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${
                   shop.status === 'open' ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-300'
                 }`}>
                   {shop.status === 'open' ? '● Open' : '● Closed'}
                 </span>
-                {/* Category badge */}
                 <span className="absolute top-3 right-3 bg-white/90 backdrop-blur text-slate-700 text-[10px] font-bold px-2 py-1 rounded-full">
                   {CATEGORIES.find(c => c.id === shop.category)?.emoji}
                 </span>
@@ -123,15 +131,15 @@ const Home = () => {
                 <h3 className="font-bold text-base text-slate-900 leading-tight mb-1">{shop.name}</h3>
                 <div className="flex items-center gap-1 text-slate-400 text-xs mb-3">
                   <HiOutlineLocationMarker size={13} />
-                  <span>{shop.city} · {shop.distance}</span>
+                  <span>{shop.city || 'Local'}</span>
                 </div>
                 <div className="flex items-center gap-1 mb-4">
                   <HiOutlineStar className="text-amber-400 fill-amber-400" size={14} />
-                  <span className="text-sm font-bold text-slate-800">{shop.rating}</span>
-                  <span className="text-xs text-slate-400">({shop.reviews} reviews)</span>
+                  <span className="text-sm font-bold text-slate-800">{shop.rating || 0}</span>
+                  <span className="text-xs text-slate-400">({shop.reviews || 0} reviews)</span>
                 </div>
                 <Link
-                  to={`/shop/${shop.id}`}
+                  to={`/shop/${shop._id}`}
                   className="mt-auto block text-center py-2.5 rounded-xl border-2 border-slate-900 text-slate-900 text-sm font-bold hover:bg-slate-900 hover:text-white transition-all duration-200"
                 >
                   Visit Shop
@@ -156,7 +164,7 @@ const Home = () => {
       <section className="bg-white border-y border-slate-100 py-16">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div {...fadeUp()} className="text-center mb-12">
-            <p className="text-xs font-black uppercase tracking-widest text-red-500 mb-2">Why Panda</p>
+            <p className="text-xs font-black uppercase tracking-widest text-red-500 mb-2">Why Mandi-360</p>
             <h2 className="text-3xl font-black text-slate-900 tracking-tight">Built for your neighborhood</h2>
           </motion.div>
 
@@ -190,12 +198,12 @@ const Home = () => {
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/3 translate-y-1/3" />
 
           <div className="relative z-10 text-center md:text-left">
-            <span className="text-5xl block mb-4">🐼</span>
+            <span className="text-5xl block mb-4">🛒</span>
             <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-3">
               Own a local shop?
             </h2>
             <p className="text-slate-400 max-w-md">
-              List your shop on Panda for free and start reaching thousands of customers in your neighborhood today.
+              List your shop on Mandi-360 for free and start reaching thousands of customers in your neighborhood today.
             </p>
           </div>
 
