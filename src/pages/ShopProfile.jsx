@@ -203,7 +203,7 @@ const ProductCard = ({ product, index, shopName, shopId }) => {
             {product.tag}
           </span>
         )}
-        {!product.inStock && (
+        {(!product.inStock || product.stock === 0) && (
           <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
             <span className="bg-slate-900 text-white text-xs font-bold px-3 py-1 rounded-full">Out of Stock</span>
           </div>

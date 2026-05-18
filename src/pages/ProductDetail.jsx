@@ -420,9 +420,9 @@ const ProductDetail = () => {
             )}
 
             <div className="flex items-center gap-2">
-              <span className={`w-2.5 h-2.5 rounded-full ${product.inStock ? 'bg-emerald-500' : 'bg-red-400'}`} />
-              <span className={`text-sm font-bold ${product.inStock ? 'text-emerald-600' : 'text-red-500'}`}>
-                {product.inStock ? 'In Stock - Ready to ship' : 'Out of Stock'}
+              <span className={`w-2.5 h-2.5 rounded-full ${product.inStock && product.stock !== 0 ? 'bg-emerald-500' : 'bg-red-400'}`} />
+              <span className={`text-sm font-bold ${product.inStock && product.stock !== 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                {product.inStock && product.stock !== 0 ? 'In Stock - Ready to ship' : 'Out of Stock'}
               </span>
             </div>
 
