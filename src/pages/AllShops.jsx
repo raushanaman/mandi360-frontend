@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiOutlineSearch, HiOutlineFilter, HiOutlineSparkles } from 'react-icons/hi';
+import { HiOutlineSearch, HiOutlineFilter, HiOutlineSparkles, HiOutlineLocationMarker, HiOutlineX } from 'react-icons/hi';
 import { CATEGORIES } from '../data/shopsData';
 import { ShopCard, Pagination } from '../components/common/ShopCard';
 import API from '../utils/api';
@@ -18,6 +18,9 @@ const AllShops = () => {
   const [page,           setPage]           = useState(1);
   const [shops,          setShops]          = useState([]);
   const [loading,        setLoading]        = useState(true);
+  const [userCity,       setUserCity]       = useState('');
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError,   setLocationError]   = useState('');
 
   useEffect(() => {
     axios.get(`${API}/shops`)
@@ -26,17 +29,42 @@ const AllShops = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  // searchParams change hone pe search state update karo
   useEffect(() => {
     const q = searchParams.get('q') || '';
     setSearch(q);
     setPage(1);
-    // Page pe scroll karo taaki results dikhein
     if (q) window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [searchParams.toString()]);
 
+  const detectLocation = () => {
+    if (!navigator.geolocation) return setLocationError('Geolocation not supported');
+    setLocationLoading(true);
+    setLocationError('');
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${coords.latitude}&lon=${coords.longitude}&format=json`
+          );
+          const data = await res.json();
+          const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || '';
+          setUserCity(city);
+          setPage(1);
+        } catch {
+          setLocationError('Could not detect city');
+        } finally {
+          setLocationLoading(false);
+        }
+      },
+      () => { setLocationError('Location access denied'); setLocationLoading(false); }
+    );
+  };
+
   const filtered = useMemo(() => {
     let list = shops;
+    if (userCity.trim()) list = list.filter(s =>
+      (s.city || '').toLowerCase().includes(userCity.toLowerCase())
+    );
     if (activeCategory !== 'all') list = list.filter(s => s.category === activeCategory);
     if (search.trim()) list = list.filter(s =>
       s.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -45,7 +73,7 @@ const AllShops = () => {
     if (sortBy === 'rating')  return [...list].sort((a, b) => b.rating - a.rating);
     if (sortBy === 'reviews') return [...list].sort((a, b) => b.reviews - a.reviews);
     return list;
-  }, [shops, search, activeCategory, sortBy]);
+  }, [shops, search, activeCategory, sortBy, userCity]);
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -73,7 +101,26 @@ const AllShops = () => {
               <HiOutlineSparkles size={12} /> Explore Local
             </span>
             <h1 className="text-5xl md:text-6xl font-black tracking-tight mb-3">All Local Shops</h1>
-            <p className="text-slate-400 mb-8 text-lg">Discover {shops.length}+ registered shops in your community</p>
+            <p className="text-slate-400 mb-6 text-lg">Discover {shops.length}+ registered shops in your community</p>
+
+            {/* Location Bar */}
+            <div className="flex flex-wrap items-center gap-3 mb-6">
+              <button onClick={detectLocation} disabled={locationLoading}
+                className="flex items-center gap-2 bg-white/10 border border-white/20 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-white/20 transition-all disabled:opacity-60"
+              >
+                <HiOutlineLocationMarker size={16} />
+                {locationLoading ? 'Detecting...' : userCity ? `📍 ${userCity}` : 'Use My Location'}
+              </button>
+              {userCity && (
+                <button onClick={() => { setUserCity(''); setPage(1); }}
+                  className="flex items-center gap-1.5 bg-red-500/20 border border-red-500/30 text-red-400 px-3 py-2.5 rounded-xl text-xs font-bold hover:bg-red-500/30 transition-all"
+                >
+                  <HiOutlineX size={13} /> Clear Location
+                </button>
+              )}
+              {locationError && <p className="text-red-400 text-xs font-semibold">{locationError}</p>}
+            </div>
+
             <div className="relative max-w-xl">
               <HiOutlineSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
               <input
@@ -125,12 +172,24 @@ const AllShops = () => {
                 </button>
               ))}
             </div>
-            <select value={sortBy} onChange={e => { setSortBy(e.target.value); setPage(1); }}
-              className="bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700 px-4 py-2 rounded-xl outline-none cursor-pointer flex-shrink-0"
-            >
-              <option value="rating">⭐ Top Rated</option>
-              <option value="reviews">💬 Most Reviewed</option>
-            </select>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Manual city input */}
+              <div className="relative">
+                <HiOutlineLocationMarker className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                <input
+                  type="text" value={userCity}
+                  onChange={e => { setUserCity(e.target.value); setPage(1); }}
+                  placeholder="Filter by city..."
+                  className="pl-8 pr-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:border-slate-400 w-36"
+                />
+              </div>
+              <select value={sortBy} onChange={e => { setSortBy(e.target.value); setPage(1); }}
+                className="bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700 px-4 py-2 rounded-xl outline-none cursor-pointer"
+              >
+                <option value="rating">⭐ Top Rated</option>
+                <option value="reviews">💬 Most Reviewed</option>
+              </select>
+            </div>
           </div>
         </motion.div>
 
